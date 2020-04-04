@@ -15,8 +15,11 @@ def hello_world():
 
 @app.route('/stocks/<stock_name>')
 def show_user_profile(stock_name):
-    sh = StockHelper()
-    return json.dumps(sh.get_us_recent_month(stock_name))
+    if stock_name == 'NULL':
+        return json.dumps(False)
+    else:
+        sh = StockHelper()
+        return json.dumps(sh.get_us_recent_month(stock_name))
 
 
 if __name__ == '__main__':
