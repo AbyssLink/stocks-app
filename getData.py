@@ -1,7 +1,9 @@
 import akshare as ak
 import yfinance as yf
+import pandas as pd
 from os import path
 import json
+import time
 
 
 class StockHelper:
@@ -11,10 +13,19 @@ class StockHelper:
         self.__stock_df = self.get_remote_data()
 
     def get_remote_data(self):
+        if(path.exists(path.join('Downloads', f'{self.__symbol}_history.csv'))):
+            # fetch file every day
+            if (time.time() - path.getmtime(path.join('Downloads', f'{self.__symbol}_history.csv'))) <= float(24*60*60):
+                with open(path.join('Downloads', f'{self.__symbol}_history.csv')) as f:
+                    print(f'fetch local data = {self.__symbol}_history.csv')
+                    stock_us_df = pd.read_csv(
+                        f, index_col='date', parse_dates=True)
+                    return stock_us_df
         try:
             stock_us_df = ak.stock_us_daily(symbol=self.__symbol)
             stock_us_df.to_csv(
                 path.join('Downloads', f'{self.__symbol}_history.csv'))
+            print('fetch remote data = akshare')
             return stock_us_df
         except KeyError as e:
             return False
@@ -52,10 +63,12 @@ class StockHelper:
             if(path.exists(path.join('Static', f'{self.__symbol}.json'))):
                 with open(path.join('Static', f'{self.__symbol}.json'), 'r') as f:
                     stock_info = json.loads(f.read())
+                    print(f'fectch local info = {self.__symbol}.json')
             else:
                 stock = yf.Ticker(self.__symbol)
                 try:
                     stock_info = stock.info
+                    print(f'fectch remote info = {self.__symbol}.json')
                     with open(path.join('Static', f'{self.__symbol}.json'), 'w') as fp:
                         json.dump(stock_info, fp)
                 except IndexError:
