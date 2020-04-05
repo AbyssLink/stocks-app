@@ -58,8 +58,14 @@ class StockList(Resource):
 # get stock history data from AKShare
 class StockHistory(Resource):
     def get(self, symbol):
-        sh = StockHelper()
-        return sh.get_us_recent_month(symbol)
+        sh = StockHelper(symbol=symbol)
+        return sh.get_recent_chart_data()
+
+
+class StockHistoryList(Resource):
+    def get(self, symbol):
+        sh = StockHelper(symbol=symbol)
+        return sh.get_rencent_list_data()
 
 
 #
@@ -68,6 +74,7 @@ class StockHistory(Resource):
 api.add_resource(StockList, '/stocks')
 api.add_resource(Stock, '/stocks/<stock_id>')
 api.add_resource(StockHistory, '/stocks-history/<symbol>')
+api.add_resource(StockHistoryList, '/stocks-history-list/<symbol>')
 
 if __name__ == '__main__':
     app.run(debug=True)
