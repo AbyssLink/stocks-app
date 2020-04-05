@@ -68,6 +68,12 @@ class StockHistoryList(Resource):
         return sh.get_rencent_list_data()
 
 
+class StockInfo(Resource):
+    def get(self, symbol):
+        sh = StockHelper(symbol=symbol)
+        return sh.get_stock_info()
+
+
 #
 # Actually setup the Api resource routing here
 #
@@ -75,6 +81,7 @@ api.add_resource(StockList, '/stocks')
 api.add_resource(Stock, '/stocks/<stock_id>')
 api.add_resource(StockHistory, '/stocks-history/<symbol>')
 api.add_resource(StockHistoryList, '/stocks-history-list/<symbol>')
+api.add_resource(StockInfo, '/stocks-info/<symbol>')
 
 if __name__ == '__main__':
     app.run(debug=True)

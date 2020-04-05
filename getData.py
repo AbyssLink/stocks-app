@@ -1,5 +1,7 @@
 import akshare as ak
+import yfinance as yf
 from os import path
+import json
 
 
 class StockHelper:
@@ -41,10 +43,35 @@ class StockHelper:
         else:
             return {'success': False}
 
+    def get_factor_data(self):
+        qfq_df = ak.stock_us_daily(symbol=self.__symbol, factor="qfq")
+        print(qfq_df)
+
+    def get_stock_info(self):
+        if self.__stock_df is not False:
+            if(path.exists(path.join('Static', f'{self.__symbol}.json'))):
+                with open(path.join('Static', f'{self.__symbol}.json'), 'r') as f:
+                    stock_info = json.loads(f.read())
+            else:
+                stock = yf.Ticker(self.__symbol)
+                try:
+                    stock_info = stock.info
+                    with open(path.join('Static', f'{self.__symbol}.json'), 'w') as fp:
+                        json.dump(stock_info, fp)
+                except IndexError:
+                    return {'success': False}
+            res = dict((k, stock_info[k]) for k in ["logo_url", "sector", "phone", "website", "fullTimeEmployees"]
+                       if k in stock_info)
+            # print(res)
+            return res
+        else:
+            return {'success': False}
+
     def test(self):
         stock_us_df = ak.stock_us_daily(symbol='AAPL')
 
 
 if __name__ == '__main__':
-    sh = StockHelper()
-    sh.get_recent_chart_data('AAPL')
+    sh = StockHelper('TSLA')
+    # sh.get_factor_data()
+    sh.get_stock_info()
