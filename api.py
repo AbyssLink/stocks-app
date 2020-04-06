@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
-from flask_restful import reqparse, abort, Api, Resource
+from flask_restful import Api, Resource, abort, reqparse
+
 from getData import StockHelper
 from strategy import StrategyHelper
 
@@ -78,9 +79,12 @@ class StockInfo(Resource):
 class PloySignalChart(Resource):
     def get(self, symbol):
         th = StrategyHelper(symbol=symbol)
-        th.update_range(300)
-        th.add_signal(10, 30)
-        return th.get_signal_chart_data()
+        if th.get_df() is not None:
+            th.update_range(150)
+            th.add_signal(10, 30)
+            return th.get_signal_chart_data()
+        else:
+            return {'success': False}
 
 
 #

@@ -1,8 +1,10 @@
-import pandas as pd
-import numpy as np
-from getData import StockHelper
-import json
 import datetime as dt
+import json
+
+import numpy as np
+import pandas as pd
+
+from getData import StockHelper
 
 
 class StrategyHelper:
@@ -29,6 +31,7 @@ class StrategyHelper:
         df['profit'] = [df.loc[i, 'close1'] - df.loc[i, 'close']
                         if df.loc[i, 'shares'] == 1 else 0 for i in df.index]
         df['wealth'] = df['profit'].cumsum()
+        df = df.dropna()
         self.__df = df
 
     def get_df(self):
