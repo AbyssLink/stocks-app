@@ -2,6 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_restful import reqparse, abort, Api, Resource
 from getData import StockHelper
+from strategy import StrategyHelper
 
 app = Flask(__name__)
 CORS(app)
@@ -74,6 +75,14 @@ class StockInfo(Resource):
         return sh.get_stock_info()
 
 
+class PloySignalChart(Resource):
+    def get(self, symbol):
+        th = StrategyHelper(symbol=symbol)
+        th.update_range(300)
+        th.add_signal(10, 30)
+        return th.get_signal_chart_data()
+
+
 #
 # Actually setup the Api resource routing here
 #
@@ -82,6 +91,7 @@ api.add_resource(Stock, '/stocks/<stock_id>')
 api.add_resource(StockHistory, '/stocks-history/<symbol>')
 api.add_resource(StockHistoryList, '/stocks-history-list/<symbol>')
 api.add_resource(StockInfo, '/stocks-info/<symbol>')
+api.add_resource(PloySignalChart, '/ploy-signal/<symbol>')
 
 if __name__ == '__main__':
     app.run(debug=True)

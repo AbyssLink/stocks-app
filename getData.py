@@ -30,6 +30,9 @@ class StockHelper:
         except KeyError as e:
             return False
 
+    def get_stock_df(self):
+        return self.__stock_df
+
     def get_recent_chart_data(self):
         if self.__stock_df is not False:
             stock_data = []
