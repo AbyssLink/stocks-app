@@ -1,5 +1,7 @@
+import ast
 import json
 from os import path
+from urllib.request import url2pathname
 
 from flask import Flask
 from flask_cors import CORS
@@ -22,6 +24,12 @@ STOCKS = {
 #     '3': {'id': 3, 'username': 'Chino', 'password': 'admin'},
 #     '4': {'id': 4, 'username': 'Chii', 'password': 'admin'},
 # }
+
+
+# * very useful method *
+# https://stackoverflow.com/questions/72899/how-do-i-sort-a-list-of-dictionaries-by-a-value-of-the-dictionary
+def sort_list_by_key(unsorts: list, sort_key: str):
+    return sorted(unsorts, key=lambda k: k[sort_key])
 
 
 def get_local_users():
@@ -56,7 +64,8 @@ parser.add_argument('symbol')
 parser.add_argument('user_id')
 parser.add_argument('username')
 parser.add_argument('password')
-parser.add_argument('_end')
+parser.add_argument('range')
+parser.add_argument('sort')
 
 
 class User(Resource):
@@ -93,8 +102,22 @@ class UserList(Resource):
         users = []
         for k, v in self.__users.items():
             users.append(v)
-        return users, 200, {'Access-Control-Expose-Headers': 'X-Total-Count',
-                            'X-Total-Count': args['_end']}
+        range_str = url2pathname(args['range'])
+        range_param = ast.literal_eval(range_str)
+        start = range_param[0]
+        if range_param[1] <= len(users):
+            end = range_param[1]
+        else:
+            end = len(users)
+        sort_str = url2pathname(args['sort'])
+        sort_param = ast.literal_eval(sort_str)
+        sort_key = sort_param[0]
+        sort_order = sort_param[1]
+        users = sort_list_by_key(users, sort_key)
+        if sort_order == 'DESC':
+            users.reverse()
+        return users[start: end+1], 200, {'Access-Control-Expose-Headers': 'Content-Range',
+                                          'Content-Range': f'posts {start}-{end}/{len(users)}'}
 
     def post(self):
         args = parser.parse_args()
