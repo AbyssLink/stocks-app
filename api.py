@@ -1,3 +1,6 @@
+import json
+from os import path
+
 from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api, Resource, abort, reqparse
@@ -6,21 +9,100 @@ from getData import StockHelper
 from strategy import StrategyHelper
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 api = Api(app)
 
 STOCKS = {
     'stock1': {'symbol': 'AAPL'}
 }
 
+# USERS = {
+#     '1': {'id': 1, 'username': 'Admin', 'password': 'admin'},
+#     '2': {'id': 2, 'username': 'Nick', 'password': 'admin'},
+#     '3': {'id': 3, 'username': 'Chino', 'password': 'admin'},
+#     '4': {'id': 4, 'username': 'Chii', 'password': 'admin'},
+# }
+
+
+def get_local_users():
+    if(path.exists(path.join('private', 'users.json'))):
+        with open(path.join('private', 'users.json'), 'r') as f:
+            users = json.loads(f.read())
+            print('Read local users.json file')
+            return users
+    else:
+        print('No users local file!')
+
+
+def write_local_users(users: dict):
+    with open(path.join('private', 'users.json'), 'w') as f:
+        # f.wirte(json.dumps(users))
+        json.dump(users, f)
+        print('Write local users.json file')
+
 
 def abort_if_not_exist(symbol_id):
     if symbol_id not in STOCKS:
-        abort(404, message="Stock {} doesn't exist".format(symbol_id))
+        abort(404, message=f"Stock {symbol_id} doesn't exist")
+
+
+def abort_if_user_not_exist(user_id, USERS):
+    if user_id not in USERS:
+        abort(404, message=f"User {user_id} doesn't exist")
 
 
 parser = reqparse.RequestParser()
 parser.add_argument('symbol')
+parser.add_argument('user_id')
+parser.add_argument('username')
+parser.add_argument('password')
+parser.add_argument('_end')
+
+
+class User(Resource):
+    def __init__(self):
+        super().__init__()
+        self.__users = get_local_users()
+
+    def get(self, user_id):
+        abort_if_user_not_exist(user_id, self.__users)
+        return self.__users[user_id]
+
+    def delete(self, user_id):
+        abort_if_user_not_exist(user_id, self.__users)
+        del self.__users[user_id]
+        write_local_users(self.__users)
+        return f'delete {user_id} success'
+
+    def put(self, user_id):
+        args = parser.parse_args()
+        user = {'id': int(user_id), 'username': args['username'],
+                'password': args['password']}
+        self.__users[user_id] = user
+        write_local_users(self.__users)
+        return user
+
+
+class UserList(Resource):
+    def __init__(self):
+        super().__init__()
+        self.__users = get_local_users()
+
+    def get(self):
+        args = parser.parse_args()
+        users = []
+        for k, v in self.__users.items():
+            users.append(v)
+        return users, 200, {'Access-Control-Expose-Headers': 'X-Total-Count',
+                            'X-Total-Count': args['_end']}
+
+    def post(self):
+        args = parser.parse_args()
+        user_id = str(int(max(self.__users.keys(), key=int)) + 1)
+        self.__users[user_id] = {'id': int(user_id), 'username': args['username'],
+                                 'password': args['password']}
+        write_local_users(self.__users)
+        return self.__users[user_id]
 
 
 # Stock
@@ -80,8 +162,8 @@ class PloySignalChart(Resource):
     def get(self, symbol):
         th = StrategyHelper(symbol=symbol)
         if th.get_df() is not None:
-            th.update_range(150)
-            th.add_signal(10, 30)
+            th.update_range(100)
+            th.add_signal(5, 20)
             return th.get_signal_chart_data()
         else:
             return {'success': False}
@@ -90,6 +172,8 @@ class PloySignalChart(Resource):
 #
 # Actually setup the Api resource routing here
 #
+api.add_resource(UserList, '/users')
+api.add_resource(User, '/users/<user_id>')
 api.add_resource(StockList, '/stocks')
 api.add_resource(Stock, '/stocks/<stock_id>')
 api.add_resource(StockHistory, '/stocks-history/<symbol>')
