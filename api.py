@@ -44,8 +44,9 @@ def get_local_users():
 
 def write_local_users(users: dict):
     with open(path.join('private', 'users.json'), 'w') as f:
-        # f.wirte(json.dumps(users))
-        json.dump(users, f)
+        # overwrite
+        f.write(json.dumps(users))
+        # json.dump(users, f)
         print('Write local users.json file')
 
 
@@ -77,6 +78,7 @@ class User(Resource):
         abort_if_user_not_exist(user_id, self.__users)
         return self.__users[user_id]
 
+    # need to be synchronize
     def delete(self, user_id):
         abort_if_user_not_exist(user_id, self.__users)
         del self.__users[user_id]
@@ -102,6 +104,8 @@ class UserList(Resource):
         users = []
         for k, v in self.__users.items():
             users.append(v)
+        if args['range'] == None:
+            return users
         range_str = url2pathname(args['range'])
         range_param = ast.literal_eval(range_str)
         start = range_param[0]
