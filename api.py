@@ -7,7 +7,8 @@ from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api, Resource, abort, reqparse
 
-from getData import StockHelper
+from news import fetch_news
+from stocks import StockHelper
 from strategy import StrategyHelper
 
 app = Flask(__name__)
@@ -17,6 +18,8 @@ api = Api(app)
 STOCKS = {
     'stock1': {'symbol': 'AAPL'}
 }
+
+business_url = "https://news.google.com/news/rss/headlines/section/topic/BUSINESS.en_in/Business?ned=in&hl=en-IN&gl=IN"
 
 # USERS = {
 #     '1': {'id': 1, 'username': 'Admin', 'password': 'admin'},
@@ -196,6 +199,12 @@ class PloySignalChart(Resource):
             return {'success': False}
 
 
+class GoogleNews(Resource):
+    def get(self):
+        news_list = fetch_news(business_url)
+        return news_list[0:20]
+
+
 #
 # Actually setup the Api resource routing here
 #
@@ -207,6 +216,7 @@ api.add_resource(StockHistory, '/stocks-history/<symbol>')
 api.add_resource(StockHistoryList, '/stocks-history-list/<symbol>')
 api.add_resource(StockInfo, '/stocks-info/<symbol>')
 api.add_resource(PloySignalChart, '/ploy-signal/<symbol>')
+api.add_resource(GoogleNews, '/google-news/test')
 
 if __name__ == '__main__':
     app.run(debug=True)

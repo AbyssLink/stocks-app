@@ -4,7 +4,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from getData import StockHelper
+from stocks import StockHelper
 
 
 class StrategyHelper:
