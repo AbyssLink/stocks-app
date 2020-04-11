@@ -47,6 +47,11 @@ def fetch_news(xml_news_url):
         print(f'news pubDate: {news.pubDate.text}')
         print("+-" * 20, "\n\n")
 
+    with open(path.join('news', 'News.json'), 'r') as f:
+        old_list = json.loads(f.read())
+        if old_list != news_array:
+            news_array = news_array + old_list
+
     with open(path.join('news', 'News.json'), 'w') as f:
         f.write(json.dumps(news_array))
         # print(news_array)
@@ -57,14 +62,13 @@ def fetch_news(xml_news_url):
 
 def try_get_local_news():
     if(path.exists(path.join('news', 'News.json'))):
-        if((time.time() - path.getmtime(path.join('news', 'News.json')) <= float(5*24*60*60))):
+        if((time.time() - path.getmtime(path.join('news', 'News.json')) <= float(5*60*60))):
             with open(path.join('news', 'News.json'), 'r') as f:
                 print(f'fetch local data = News.json')
                 news = json.loads(f.read())
                 # print(news)
                 return news[0:20]
-    else:
-        return False
+    return False
 
 
 def get_cover_img(text):

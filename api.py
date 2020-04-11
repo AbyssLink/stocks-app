@@ -19,7 +19,7 @@ STOCKS = {
     'stock1': {'symbol': 'AAPL'}
 }
 
-business_url = "https://news.google.com/news/rss/headlines/section/topic/BUSINESS.en_in/Business?ned=in&hl=en-IN&gl=IN"
+business_url = "https://www.moneycontrol.com/rss/latestnews.xml"
 
 # USERS = {
 #     '1': {'id': 1, 'username': 'Admin', 'password': 'admin'},
