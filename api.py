@@ -231,6 +231,17 @@ class PloySignalChart(Resource):
             return {'success': False}
 
 
+class Auth(Resource):
+    def post(self):
+        args = parser.parse_args()
+        username = args['username']
+        password = args['password']
+        if User.query.filter_by(username=username).first() is not None:
+            if User.query.filter_by(username=username).first().password == password:
+                return {'success': True}, 200
+        return {'success': False}, 233
+
+
 class NewsAPI(Resource):
     def get(self):
         news_list = fetch_news(business_url)
@@ -255,6 +266,7 @@ api.add_resource(StockHistoryList, '/stocks-history-list/<symbol>')
 api.add_resource(StockInfo, '/stocks-info/<symbol>')
 api.add_resource(PloySignalChart, '/ploy-signal/<symbol>')
 api.add_resource(NewsAPI, '/news/test')
+api.add_resource(Auth, '/auth')
 
 if __name__ == '__main__':
     app.run(debug=True)
