@@ -10,6 +10,7 @@ from flask_restful import Api, Resource, abort, reqparse
 from news import fetch_news
 from stocks import StockHelper
 from strategy import StrategyHelper
+from distribution import Distribution
 from app.static import STOCKS, business_url
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
@@ -231,6 +232,18 @@ class PloySignalChart(Resource):
             return {'success': False}
 
 
+class DistributionChart(Resource):
+    def get(self, symbol):
+        dt = Distribution('FB')
+        return dt.get_chart_data()
+
+
+class DistributionProbility(Resource):
+    def get(self, symbol):
+        dt = Distribution('FB')
+        return dt.get_probility(-0.2, 50)
+
+
 class Auth(Resource):
     def post(self):
         args = parser.parse_args()
@@ -267,6 +280,9 @@ api.add_resource(StockInfo, '/stocks-info/<symbol>')
 api.add_resource(PloySignalChart, '/ploy-signal/<symbol>')
 api.add_resource(NewsAPI, '/news/test')
 api.add_resource(Auth, '/auth')
+api.add_resource(DistributionChart, '/distrib-chart/<symbol>')
+api.add_resource(DistributionProbility, '/distrib-prob/<symbol>')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
