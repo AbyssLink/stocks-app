@@ -10,57 +10,77 @@ from flask_restful import Api, Resource, abort, reqparse
 from news import fetch_news
 from stocks import StockHelper
 from strategy import StrategyHelper
+from app.static import STOCKS, business_url
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import or_
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 api = Api(app)
 
-STOCKS = {
-    'stock1': {'symbol': 'AAPL'}
-}
+app.config['DEBUG'] = True
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:123456@localhost:3306/stock'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+app.config['SQLALCHEMY_ECHO'] = True
+db = SQLAlchemy(app)
 
-business_url = "https://www.moneycontrol.com/rss/latestnews.xml"
 
-# USERS = {
-#     '1': {'id': 1, 'username': 'Admin', 'password': 'admin'},
-#     '2': {'id': 2, 'username': 'Nick', 'password': 'admin'},
-#     '3': {'id': 3, 'username': 'Chino', 'password': 'admin'},
-#     '4': {'id': 4, 'username': 'Chii', 'password': 'admin'},
-# }
+# Models
+class User(db.Model):
+    """Data model for user accounts."""
 
+    # as_dict 实现对象序列化
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(64))
+    password = db.Column(db.String(64))
+
+    def __repr__(self):
+        return f'<User {self.username}>'
+
+
+class News(db.Model):
+    """Data model for News."""
+
+    # as_dict 实现对象序列化
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+    __tablename__ = 'news'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    img = db.Column(db.String(512))
+    title = db.Column(db.String(128))
+    description = db.Column(db.String(512))
+    link = db.Column(db.String(512))
+    date = db.Column(db.String(512))
+
+    def __repr__(self):
+        return f'<News {self.title}>'
+
+
+db.create_all()
 
 # * very useful method *
 # https://stackoverflow.com/questions/72899/how-do-i-sort-a-list-of-dictionaries-by-a-value-of-the-dictionary
+
+
 def sort_list_by_key(unsorts: list, sort_key: str):
     return sorted(unsorts, key=lambda k: k[sort_key])
 
 
-def get_local_users():
-    if(path.exists(path.join('private', 'users.json'))):
-        with open(path.join('private', 'users.json'), 'r') as f:
-            users = json.loads(f.read())
-            print('Read local users.json file')
-            return users
-    else:
-        print('No users local file!')
-
-
-def write_local_users(users: dict):
-    with open(path.join('private', 'users.json'), 'w') as f:
-        # overwrite
-        f.write(json.dumps(users))
-        # json.dump(users, f)
-        print('Write local users.json file')
-
-
-def abort_if_not_exist(symbol_id):
+def abort_if_stock_not_exist(symbol_id):
     if symbol_id not in STOCKS:
         abort(404, message=f"Stock {symbol_id} doesn't exist")
 
 
-def abort_if_user_not_exist(user_id, USERS):
-    if user_id not in USERS:
+def get_user_from_db(user_id):
+    if User.query.filter_by(id=user_id).first() is None:
         abort(404, message=f"User {user_id} doesn't exist")
+    else:
+        return User.query.filter_by(id=user_id).first()
 
 
 parser = reqparse.RequestParser()
@@ -72,41 +92,51 @@ parser.add_argument('range')
 parser.add_argument('sort')
 
 
-class User(Resource):
+class UserOne(Resource):
     def __init__(self):
         super().__init__()
-        self.__users = get_local_users()
+        users = User.query.all()
+        user_list = []
+        for user in users:
+            user_list.append(user.as_dict())
+        self.__users = user_list
 
     def get(self, user_id):
-        abort_if_user_not_exist(user_id, self.__users)
-        return self.__users[user_id]
+        user = get_user_from_db(user_id)
+        return user.as_dict()
 
     # need to be synchronize
     def delete(self, user_id):
-        abort_if_user_not_exist(user_id, self.__users)
-        del self.__users[user_id]
-        write_local_users(self.__users)
+        user = get_user_from_db(user_id)
+        db.session.delete(user)
+        db.session.commit()
         return f'delete {user_id} success'
 
+    # update one user
     def put(self, user_id):
         args = parser.parse_args()
-        user = {'id': int(user_id), 'username': args['username'],
-                'password': args['password']}
-        self.__users[user_id] = user
-        write_local_users(self.__users)
-        return user
+        username = args['username']
+        password = args['password']
+        # Create an instance of the User class
+        user = get_user_from_db(user_id)
+        user.username = username
+        user.password = password
+        db.session.commit()  # Commits all changes
+        return user.as_dict()
 
 
 class UserList(Resource):
     def __init__(self):
         super().__init__()
-        self.__users = get_local_users()
+        users = User.query.all()
+        user_list = []
+        for user in users:
+            user_list.append(user.as_dict())
+        self.__users = user_list
 
     def get(self):
         args = parser.parse_args()
-        users = []
-        for k, v in self.__users.items():
-            users.append(v)
+        users = self.__users
         if args['range'] == None:
             return users
         range_str = url2pathname(args['range'])
@@ -128,22 +158,24 @@ class UserList(Resource):
 
     def post(self):
         args = parser.parse_args()
-        user_id = str(int(max(self.__users.keys(), key=int)) + 1)
-        self.__users[user_id] = {'id': int(user_id), 'username': args['username'],
-                                 'password': args['password']}
-        write_local_users(self.__users)
-        return self.__users[user_id]
+        username = args['username']
+        password = args['password']
+        # Create an instance of the User class
+        new_user = User(username=username, password=password)
+        db.session.add(new_user)  # Adds new User record to database
+        db.session.commit()  # Commits all changes
+        return new_user.as_dict()
 
 
 # Stock
 # shows a single Stock item and lets you delete a stock item
 class Stock(Resource):
     def get(self, stock_id):
-        abort_if_not_exist(stock_id)
+        abort_if_stock_not_exist(stock_id)
         return STOCKS[stock_id]
 
     def delete(self, stock_id):
-        abort_if_not_exist(stock_id)
+        abort_if_stock_not_exist(stock_id)
         del STOCKS[stock_id]
         return '', 204
 
@@ -199,24 +231,30 @@ class PloySignalChart(Resource):
             return {'success': False}
 
 
-class GoogleNews(Resource):
+class NewsAPI(Resource):
     def get(self):
         news_list = fetch_news(business_url)
-        return news_list[0:20]
+        for news in news_list:
+            if News.query.filter_by(title=news['title']).first() is None:
+                new_news = News(img=news['img'], title=news['title'],
+                                description=news['description'], link=news['link'], date=news['date'])
+                db.session.add(new_news)
+                db.session.commit()
+        return news_list
 
 
 #
 # Actually setup the Api resource routing here
 #
 api.add_resource(UserList, '/users')
-api.add_resource(User, '/users/<user_id>')
+api.add_resource(UserOne, '/users/<user_id>')
 api.add_resource(StockList, '/stocks')
 api.add_resource(Stock, '/stocks/<stock_id>')
 api.add_resource(StockHistory, '/stocks-history/<symbol>')
 api.add_resource(StockHistoryList, '/stocks-history-list/<symbol>')
 api.add_resource(StockInfo, '/stocks-info/<symbol>')
 api.add_resource(PloySignalChart, '/ploy-signal/<symbol>')
-api.add_resource(GoogleNews, '/google-news/test')
+api.add_resource(NewsAPI, '/news/test')
 
 if __name__ == '__main__':
     app.run(debug=True)
