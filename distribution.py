@@ -16,14 +16,14 @@ class Distribution:
     def init_df(self):
         sh = StockHelper(self.__symbol)
         # just cut off the df for show
-        return sh.get_stock_df().head(300)
+        return sh.get_stock_df().tail(300)
 
     def get_chart_data(self, days):
         # let play around with self.__df data by calculating the log daily return
         self.__df['log_return'] = np.log(
             self.__df['close']).shift(-1) - np.log(self.__df['close'])
         self.__df['log_return'].dropna(inplace=True)
-        log_return_series = self.__df['log_return'].head(days)
+        log_return_series = self.__df['log_return'].tail(days)
 
         # very close to a normal distribution
         mu = log_return_series.mean()
@@ -56,7 +56,7 @@ class Distribution:
         drop = norm.cdf(ratio, mu_days, sigma_days)
         print(
             f'The probability of dropping over {ratio} in {days} days is ', drop)
-        return {'prob': drop}
+        return {'prob': round(drop, 5)}
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ from news import fetch_news
 from stocks import StockHelper
 from strategy import StrategyHelper
 from distribution import Distribution
+from svm_test import SVMHelper
 from app.static import STOCKS, business_url
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
@@ -236,7 +237,6 @@ class PloySignalChart(Resource):
 
 class DistributionChart(Resource):
     def get(self, symbol):
-        print(symbol)
         # FIXME: dirty method
         real_symbol = symbol.split('|')[0]
         days = symbol.split('|')[2]
@@ -250,6 +250,15 @@ class DistributionProbility(Resource):
         real_symbol, ratio, days = symbol.split('|')
         dt = Distribution(symbol=real_symbol)
         return dt.get_probility(float(ratio), int(days))
+
+
+class SVMPredict(Resource):
+    def get(self, symbol):
+        # FIXME: dirty method
+        real_symbol = symbol.split('|')[0]
+        train = symbol.split('|')[1]
+        vh = SVMHelper(symbol=real_symbol)
+        return vh.train(train=int(train))
 
 
 class Auth(Resource):
@@ -290,7 +299,7 @@ api.add_resource(NewsAPI, '/news/test')
 api.add_resource(Auth, '/auth')
 api.add_resource(DistributionChart, '/distrib-chart/<symbol>')
 api.add_resource(DistributionProbility, '/distrib-prob/<symbol>')
-
+api.add_resource(SVMPredict, '/svm/<symbol>')
 
 if __name__ == '__main__':
     app.run(debug=True)
