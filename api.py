@@ -223,10 +223,12 @@ class StockInfo(Resource):
 
 class PloySignalChart(Resource):
     def get(self, symbol):
-        th = StrategyHelper(symbol=symbol)
+        # FIXME: dirty method
+        real_symbol, fast, slow, days = symbol.split('|')
+        th = StrategyHelper(symbol=real_symbol)
         if th.get_df() is not None:
-            th.update_range(100)
-            th.add_signal(5, 20)
+            th.update_range(int(days))
+            th.add_signal(int(fast), int(slow))
             return th.get_signal_chart_data()
         else:
             return {'success': False}
@@ -234,14 +236,20 @@ class PloySignalChart(Resource):
 
 class DistributionChart(Resource):
     def get(self, symbol):
-        dt = Distribution(symbol=symbol)
-        return dt.get_chart_data()
+        print(symbol)
+        # FIXME: dirty method
+        real_symbol = symbol.split('|')[0]
+        days = symbol.split('|')[2]
+        dt = Distribution(symbol=real_symbol)
+        return dt.get_chart_data(int(days))
 
 
 class DistributionProbility(Resource):
     def get(self, symbol):
-        dt = Distribution(symbol=symbol)
-        return dt.get_probility(-0.2, 50)
+        # FIXME: dirty method
+        real_symbol, ratio, days = symbol.split('|')
+        dt = Distribution(symbol=real_symbol)
+        return dt.get_probility(float(ratio), int(days))
 
 
 class Auth(Resource):

@@ -18,24 +18,25 @@ class Distribution:
         # just cut off the df for show
         return sh.get_stock_df().head(300)
 
-    def get_chart_data(self):
+    def get_chart_data(self, days):
         # let play around with self.__df data by calculating the log daily return
         self.__df['log_return'] = np.log(
             self.__df['close']).shift(-1) - np.log(self.__df['close'])
         self.__df['log_return'].dropna(inplace=True)
+        log_return_series = self.__df['log_return'].head(days)
 
         # very close to a normal distribution
-        mu = self.__df['log_return'].mean()
-        sigma = self.__df['log_return'].std(ddof=1)
+        mu = log_return_series.mean()
+        sigma = log_return_series.std(ddof=1)
 
         density = pd.DataFrame()
-        density['x'] = np.arange(self.__df['log_return'].min()-0.01,
-                                 self.__df['log_return'].max()+0.01, 0.0027)
+        density['x'] = np.arange(log_return_series.min()-0.01,
+                                 log_return_series.max()+0.01, 0.0027)
         density['pdf'] = norm.pdf(density['x'], mu, sigma)
         density['x'].dropna(inplace=True)
         density['pdf'].dropna(inplace=True)
         frequency_each, _, _ = matplotlib.pyplot.hist(
-            self.__df['log_return'], bins=density['x'].size)
+            log_return_series, bins=density['x'].size)
         chart_data = {
             'x': [str(round(elem, 2)) for elem in density['x'].to_list()],
             'pdf': [round(elem, 2) for elem in density['pdf'].to_list()],
