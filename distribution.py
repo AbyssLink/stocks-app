@@ -2,7 +2,9 @@ from scipy.stats import norm
 import pandas as pd
 from stocks import StockHelper
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib
+
+matplotlib.use('Agg')
 
 
 class Distribution:
@@ -14,12 +16,13 @@ class Distribution:
     def init_df(self):
         sh = StockHelper(self.__symbol)
         # just cut off the df for show
-        return sh.get_stock_df().head(50)
+        return sh.get_stock_df().head(300)
 
     def get_chart_data(self):
         # let play around with self.__df data by calculating the log daily return
         self.__df['log_return'] = np.log(
             self.__df['close']).shift(-1) - np.log(self.__df['close'])
+        self.__df['log_return'].dropna(inplace=True)
 
         # very close to a normal distribution
         mu = self.__df['log_return'].mean()
@@ -29,15 +32,21 @@ class Distribution:
         density['x'] = np.arange(self.__df['log_return'].min()-0.01,
                                  self.__df['log_return'].max()+0.01, 0.0027)
         density['pdf'] = norm.pdf(density['x'], mu, sigma)
+        density['x'].dropna(inplace=True)
+        density['pdf'].dropna(inplace=True)
+        frequency_each, _, _ = matplotlib.pyplot.hist(
+            self.__df['log_return'], bins=density['x'].size)
         chart_data = {
             'x': [str(round(elem, 2)) for elem in density['x'].to_list()],
-            'pdf': [round(elem, 2) for elem in density['pdf'].to_list()]
-        }
+            'pdf': [round(elem, 2) for elem in density['pdf'].to_list()],
+            'freq': frequency_each.tolist()}
         return chart_data
 
     def get_probility(self, ratio, days):
         self.__df['log_return'] = np.log(
             self.__df['close']).shift(-1) - np.log(self.__df['close'])
+        self.__df['log_return'].dropna(inplace=True)
+
         # drop over x% in x days
         mu = self.__df['log_return'].mean()
         sigma = self.__df['log_return'].std(ddof=1)

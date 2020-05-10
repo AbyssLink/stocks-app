@@ -234,13 +234,13 @@ class PloySignalChart(Resource):
 
 class DistributionChart(Resource):
     def get(self, symbol):
-        dt = Distribution('FB')
+        dt = Distribution(symbol=symbol)
         return dt.get_chart_data()
 
 
 class DistributionProbility(Resource):
     def get(self, symbol):
-        dt = Distribution('FB')
+        dt = Distribution(symbol=symbol)
         return dt.get_probility(-0.2, 50)
 
 
