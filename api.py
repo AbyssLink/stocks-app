@@ -6,15 +6,15 @@ from urllib.request import url2pathname
 from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api, Resource, abort, reqparse
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import or_
 
+from app.static import STOCKS, business_url
+from distribution import Distribution
 from news import fetch_news
 from stocks import StockHelper
 from strategy import StrategyHelper
-from distribution import Distribution
 from svm_test import SVMHelper
-from app.static import STOCKS, business_url
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import or_
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -54,7 +54,7 @@ class News(db.Model):
     __tablename__ = 'news'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     img = db.Column(db.String(512))
-    title = db.Column(db.String(128))
+    title = db.Column(db.String(512))
     description = db.Column(db.String(512))
     link = db.Column(db.String(512))
     date = db.Column(db.String(512))

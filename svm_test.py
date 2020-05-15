@@ -1,8 +1,9 @@
-from pandas import Series, DataFrame
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from pandas import DataFrame, Series
 from sklearn import svm
+
 from stocks import StockHelper
 
 
@@ -30,8 +31,8 @@ class SVMHelper:
             stock_df['close']  # today's high - close
         stock_df['close-low'] = stock_df['close'] - \
             stock_df['low']  # today's close - low
-        value[value >= 0] = 1  # 0 means rise
-        value[value < 0] = 0  # 1 means fall
+        value[value >= 0] = 1  # 1 means rise
+        value[value < 0] = 0  # 0 means fall
         stock_df['value'] = value
         stock_df = stock_df.dropna(how='any')
         del(stock_df['open'])
@@ -52,10 +53,16 @@ class SVMHelper:
         value_corrects = []
         while train < L:
             Data_train = self.__df[train-train_original:train]
-            value_train = self.__df['value'][train-train_original:train]
             Data_predict = self.__df[train:train+1]
+            value_train = self.__df['value'][train-train_original:train]
             value_real = self.__df['value'][train:train+1]
+            del(Data_train['value'])
+            del(Data_predict['value'])
+            # print(Data_train)
+            # print(value_train)
+            # poly：选择模型所使用的核函数为多项式核函数
             classifier = svm.SVC(kernel='poly')
+            # 根据给定的训练数据拟合 SVM 模型
             classifier.fit(Data_train, value_train)
             value_predict = classifier.predict(Data_predict)
             value_predicts.append(int(value_predict))

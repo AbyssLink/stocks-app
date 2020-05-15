@@ -41,12 +41,14 @@ def fetch_news(xml_news_url):
 
 def get_cover_img(text):
     match = re.search(r'http.*.jpg', text)
+    # if img is None, return a default picture
+    if match is None:
+        return 'https://www.google.com/logos/doodles/2020/stay-home-save-lives-6753651837108752.2-2xa.gif'
     return match.group()
 
 
 def get_description(text):
     return re.sub(r'<img.*./> ',  '', text)
-
 
     # you can add google news 'xml' URL here for any country/category
 news_url = "https://news.google.com/news/rss/?ned=us&gl=US&hl=en"

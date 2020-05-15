@@ -3,8 +3,7 @@ Downloads/*
 /news
 /private
 
-test.ipynb
-strategy.ipynb
+*.ipynb
 
 # Created by .ignore support plugin (hsz.mobi)
 ### macOS template
