@@ -11,6 +11,7 @@ from sqlalchemy import or_
 
 from app.static import STOCKS, business_url
 from distribution import Distribution
+from lsh_recommend import get_recommendation
 from news import fetch_news
 from stocks import StockHelper
 from strategy import StrategyHelper
@@ -284,6 +285,28 @@ class NewsAPI(Resource):
         return news_list
 
 
+class RecommendNews(Resource):
+    def get(self, title):
+        news_list = News.query.all()
+        news_recommends = get_recommendation(title=title, news_list=news_list)
+        if news_recommends is not None:
+            return news_recommends
+        else:
+            # 根据字段模糊搜索
+            rows = News.query.filter(
+                or_(News.id.like("%" + title + "%") if title is not None else "",
+                    News.title.like(
+                        "%" + title + "%") if title is not None else "",
+                    News.description.like(
+                        "%" + title + "%") if title is not None else "",
+                    )
+            ).limit(10)
+            news_similars = []
+            for row in rows:
+                news_similars.append(row.as_dict())
+            return news_similars
+
+
 #
 # Actually setup the Api resource routing here
 #
@@ -300,6 +323,7 @@ api.add_resource(Auth, '/auth')
 api.add_resource(DistributionChart, '/distrib-chart/<symbol>')
 api.add_resource(DistributionProbility, '/distrib-prob/<symbol>')
 api.add_resource(SVMPredict, '/svm/<symbol>')
+api.add_resource(RecommendNews, '/news-recommend/<title>')
 
 if __name__ == '__main__':
     app.run(debug=True)
