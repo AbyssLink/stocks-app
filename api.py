@@ -32,7 +32,7 @@ db = SQLAlchemy(app)
 class User(db.Model):
     """Data model for user accounts."""
 
-    # as_dict 实现对象序列化
+    # as_dict: make object Serialization
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
@@ -48,7 +48,7 @@ class User(db.Model):
 class News(db.Model):
     """Data model for News."""
 
-    # as_dict 实现对象序列化
+    # as_dict: make object Serialization
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
@@ -64,12 +64,12 @@ class News(db.Model):
         return f'<News {self.title}>'
 
 
+# create table if not exists
 db.create_all()
+
 
 # * very useful method *
 # https://stackoverflow.com/questions/72899/how-do-i-sort-a-list-of-dictionaries-by-a-value-of-the-dictionary
-
-
 def sort_list_by_key(unsorts: list, sort_key: str):
     return sorted(unsorts, key=lambda k: k[sort_key])
 

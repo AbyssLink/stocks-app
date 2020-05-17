@@ -60,9 +60,7 @@ class SVMHelper:
             del(Data_predict['value'])
             # print(Data_train)
             # print(value_train)
-            # poly：选择模型所使用的核函数为多项式核函数
             classifier = svm.SVC(kernel='poly')
-            # 根据给定的训练数据拟合 SVM 模型
             classifier.fit(Data_train, value_train)
             value_predict = classifier.predict(Data_predict)
             value_predicts.append(int(value_predict))
