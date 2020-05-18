@@ -4,7 +4,7 @@ import pandas as pd
 from pandas import DataFrame, Series
 from sklearn import svm
 
-from stocks import StockHelper
+from utils.stocks import StockHelper
 
 
 class SVMHelper:

@@ -3,69 +3,22 @@ import json
 from os import path
 from urllib.request import url2pathname
 
-from flask import Flask
-from flask_cors import CORS
 from flask_restful import Api, Resource, abort, reqparse
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 
-from app.static import STOCKS, business_url
-from distribution import Distribution
-from lsh_recommend import get_recommendation
-from news import fetch_news
-from stocks import StockHelper
-from strategy import StrategyHelper
-from svm_test import SVMHelper
+from calc.distribution import Distribution
+from calc.lsh_recommend import get_recommendation
+from calc.moving_average import MAHelper
+from calc.svm import SVMHelper
+from models import News, User, db
+from utils.news import fetch_news
+from utils.stocks import StockHelper
 
-app = Flask(__name__)
-CORS(app, supports_credentials=True)
-api = Api(app)
+STOCKS = {
+    'stock1': {'symbol': 'AAPL'}
+}
 
-app.config['DEBUG'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:123456@localhost:3306/stock'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-app.config['SQLALCHEMY_ECHO'] = True
-db = SQLAlchemy(app)
-
-
-# Models
-class User(db.Model):
-    """Data model for user accounts."""
-
-    # as_dict: make object Serialization
-    def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(64))
-    password = db.Column(db.String(64))
-
-    def __repr__(self):
-        return f'<User {self.username}>'
-
-
-class News(db.Model):
-    """Data model for News."""
-
-    # as_dict: make object Serialization
-    def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-
-    __tablename__ = 'news'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    img = db.Column(db.String(512))
-    title = db.Column(db.String(512))
-    description = db.Column(db.String(512))
-    link = db.Column(db.String(512))
-    date = db.Column(db.String(512))
-
-    def __repr__(self):
-        return f'<News {self.title}>'
-
-
-# create table if not exists
-db.create_all()
+business_url = "https://www.moneycontrol.com/rss/latestnews.xml"
 
 
 # * very useful method *
@@ -227,7 +180,7 @@ class PloySignalChart(Resource):
     def get(self, symbol):
         # FIXME: dirty method
         real_symbol, fast, slow, days = symbol.split('|')
-        th = StrategyHelper(symbol=real_symbol)
+        th = MAHelper(symbol=real_symbol)
         if th.get_df() is not None:
             th.update_range(int(days))
             th.add_signal(int(fast), int(slow))
@@ -292,7 +245,7 @@ class RecommendNews(Resource):
         if news_recommends is not None:
             return news_recommends
         else:
-            # 根据字段模糊搜索
+            # Fuzzy search by field
             rows = News.query.filter(
                 or_(News.id.like("%" + title + "%") if title is not None else "",
                     News.title.like(
@@ -305,25 +258,3 @@ class RecommendNews(Resource):
             for row in rows:
                 news_similars.append(row.as_dict())
             return news_similars
-
-
-#
-# Actually setup the Api resource routing here
-#
-api.add_resource(UserList, '/users')
-api.add_resource(UserOne, '/users/<user_id>')
-api.add_resource(StockList, '/stocks')
-api.add_resource(Stock, '/stocks/<stock_id>')
-api.add_resource(StockHistory, '/stocks-history/<symbol>')
-api.add_resource(StockHistoryList, '/stocks-history-list/<symbol>')
-api.add_resource(StockInfo, '/stocks-info/<symbol>')
-api.add_resource(PloySignalChart, '/ploy-signal/<symbol>')
-api.add_resource(NewsAPI, '/news/test')
-api.add_resource(Auth, '/auth')
-api.add_resource(DistributionChart, '/distrib-chart/<symbol>')
-api.add_resource(DistributionProbility, '/distrib-prob/<symbol>')
-api.add_resource(SVMPredict, '/svm/<symbol>')
-api.add_resource(RecommendNews, '/news-recommend/<title>')
-
-if __name__ == '__main__':
-    app.run(debug=True)

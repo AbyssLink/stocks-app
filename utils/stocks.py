@@ -1,4 +1,5 @@
 import json
+import os
 import time
 from os import path
 
@@ -14,18 +15,20 @@ class StockHelper:
         self.__stock_df = self.get_remote_data()
 
     def get_remote_data(self):
-        if(path.exists(path.join('Downloads', f'{self.__symbol}_history.csv'))):
+        if not path.exists('static'):
+            os.mkdir('static')
+        wiret_path = path.join('static', f'{self.__symbol}_history.csv')
+        if(path.exists(wiret_path)):
             # fetch file every day
-            if (time.time() - path.getmtime(path.join('Downloads', f'{self.__symbol}_history.csv'))) <= float(24*60*60):
-                with open(path.join('Downloads', f'{self.__symbol}_history.csv')) as f:
+            if (time.time() - path.getmtime(wiret_path)) <= float(24*60*60):
+                with open(wiret_path) as f:
                     print(f'fetch local data = {self.__symbol}_history.csv')
                     stock_us_df = pd.read_csv(
                         f, index_col='date', parse_dates=True)
                     return stock_us_df
         try:
             stock_us_df = ak.stock_us_daily(symbol=self.__symbol)
-            stock_us_df.to_csv(
-                path.join('Downloads', f'{self.__symbol}_history.csv'))
+            stock_us_df.to_csv(wiret_path)
             print('fetch remote data = akshare')
             return stock_us_df
         except KeyError as e:
@@ -64,8 +67,11 @@ class StockHelper:
 
     def get_stock_info(self):
         if self.__stock_df is not None:
-            if(path.exists(path.join('Static', f'{self.__symbol}.json'))):
-                with open(path.join('Static', f'{self.__symbol}.json'), 'r') as f:
+            if not path.exists('static'):
+                os.mkdir('static')
+            wirte_path = path.join('static', f'{self.__symbol}.json')
+            if(path.exists(wirte_path)):
+                with open(wirte_path, 'r') as f:
                     stock_info = json.loads(f.read())
                     print(f'fectch local info = {self.__symbol}.json')
             else:

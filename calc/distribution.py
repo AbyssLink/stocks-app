@@ -1,8 +1,9 @@
-from scipy.stats import norm
-import pandas as pd
-from stocks import StockHelper
-import numpy as np
 import matplotlib
+import numpy as np
+import pandas as pd
+from scipy.stats import norm
+
+from utils.stocks import StockHelper
 
 matplotlib.use('Agg')
 

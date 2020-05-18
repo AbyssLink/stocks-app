@@ -50,11 +50,13 @@ def get_cover_img(text):
 def get_description(text):
     return re.sub(r'<img.*./> ',  '', text)
 
-    # you can add google news 'xml' URL here for any country/category
+
+# you can add google news 'xml' URL here for any country/category
 news_url = "https://news.google.com/news/rss/?ned=us&gl=US&hl=en"
 sports_url = "https://news.google.com/news/rss/headlines/section/topic/SPORTS.en_in/Sports?ned=in&hl=en-IN&gl=IN"
 business_url = "https://news.google.com/news/rss/headlines/section/topic/BUSINESS.en_in/Business?ned=in&hl=en-IN&gl=IN"
 moneycontrol = 'https://www.moneycontrol.com/rss/latestnews.xml'
+
 
 # now call news function with any of these url or BOTH
 # news(news_url)

@@ -4,10 +4,10 @@ import json
 import numpy as np
 import pandas as pd
 
-from stocks import StockHelper
+from utils.stocks import StockHelper
 
 
-class StrategyHelper:
+class MAHelper:
     def __init__(self, symbol):
         super().__init__()
         self.__symbol = symbol
@@ -51,7 +51,7 @@ class StrategyHelper:
 
 
 if __name__ == "__main__":
-    th = StrategyHelper('FB')
+    th = MAHelper('FB')
     th.update_range(300)
     print(th.get_df())
     th.add_signal(10, 30)
