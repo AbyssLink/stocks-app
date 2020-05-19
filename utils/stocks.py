@@ -79,7 +79,7 @@ class StockHelper:
                 try:
                     stock_info = stock.info
                     print(f'fectch remote info = {self.__symbol}.json')
-                    with open(path.join('Static', f'{self.__symbol}.json'), 'w') as fp:
+                    with open(path.join('static', f'{self.__symbol}.json'), 'w') as fp:
                         json.dump(stock_info, fp)
                 except IndexError:
                     return {'success': False}
