@@ -18,6 +18,7 @@ db.init_app(app)
 
 
 # Actually setup the Api resource routing here
+api.add_resource(Auth, '/auth')
 api.add_resource(UserList, '/users')
 api.add_resource(UserOne, '/users/<user_id>')
 api.add_resource(StockList, '/stocks')
@@ -26,11 +27,11 @@ api.add_resource(StockHistory, '/stocks-history/<symbol>')
 api.add_resource(StockHistoryList, '/stocks-history-list/<symbol>')
 api.add_resource(StockInfo, '/stocks-info/<symbol>')
 api.add_resource(PloySignalChart, '/ploy-signal/<symbol>')
-api.add_resource(NewsAPI, '/news/test')
-api.add_resource(Auth, '/auth')
 api.add_resource(DistributionChart, '/distrib-chart/<symbol>')
 api.add_resource(DistributionProbility, '/distrib-prob/<symbol>')
+api.add_resource(LinearRegression,  '/linear-regression/<symbol>')
 api.add_resource(SVMPredict, '/svm/<symbol>')
+api.add_resource(NewsAPI, '/news/test')
 api.add_resource(RecommendNews, '/news-recommend/<title>')
 
 

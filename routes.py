@@ -7,6 +7,7 @@ from flask_restful import Api, Resource, abort, reqparse
 from sqlalchemy import or_
 
 from calc.distribution import Distribution
+from calc.linear_regression import predict_data
 from calc.lsh_recommend import get_recommendation
 from calc.moving_average import MAHelper
 from calc.svm import SVMHelper
@@ -213,6 +214,16 @@ class SVMPredict(Resource):
         train = symbol.split('|')[1]
         vh = SVMHelper(symbol=real_symbol)
         return vh.train(train=int(train))
+
+
+# FIXME: add input parameter
+class LinearRegression(Resource):
+    def get(self, symbol):
+        forecast_col = 'close'  # choosing which column to forecast
+        forecast_out = 30  # how far to forecast
+        test_size = 0.3  # the size of my test set
+        return predict_data(symbol=symbol, forecast_col=forecast_col,
+                            forecast_out=forecast_out, test_size=test_size)
 
 
 class Auth(Resource):
